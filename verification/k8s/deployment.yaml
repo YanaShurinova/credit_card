@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: creditrcard-verify-deployment
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      app: verify-service
+  template:
+    metadata:
+      name: creditrcard-verify-pod
+      labels:
+        app: verify-service
+    spec:
+      containers:
+      - name: verify-container
+        image: registry.gitlab.com/shift-python/y2023/homeworks/shurinova-ya/week3/task1/verify
+        ports:
+          - containerPort: 24223
+        resources:
+          limits:
+            cpu: 500m
+            memory: '3Gi'
+          requests:
+            cpu: 500m
+            memory: '3Gi'
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 24223
+          failureThreshold: 5
+          initialDelaySecond: 30
+          periodSeconds: 2
+          successThreshold: 2
+        livenessProbe:
+          httpGet:
+            path: /live
+            port: 24223
+          failureThreshold: 10
+          initialDelaySecond: 3
+          periodSeconds: 2

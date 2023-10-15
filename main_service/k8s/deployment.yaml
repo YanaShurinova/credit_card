@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: creditrcard-main-deployment
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      app: main-service
+  template:
+    metadata:
+      name: creditrcard-main-pod
+      labels:
+        app: main-service
+    spec:
+      containers:
+      - name: main-container
+        image: registry.gitlab.com/shift-python/y2023/homeworks/shurinova-ya/week3/task1/main
+        ports:
+          - containerPort: 24123
+        resources:
+          limits:
+            cpu: 500m
+            memory: '3Gi'
+          requests:
+            cpu: 500m
+            memory: '3Gi'
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 24123
+          failureThreshold: 5
+          initialDelaySecond: 30
+          periodSeconds: 2
+          successThreshold: 2
+        livenessProbe:
+          httpGet:
+            path: /live
+            port: 24123
+          failureThreshold: 10
+          initialDelaySecond: 3
+          periodSeconds: 2

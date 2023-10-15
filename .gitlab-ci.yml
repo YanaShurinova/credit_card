@@ -1,0 +1,23 @@
+default:
+  image: python:3.10-slim
+  before_script:
+    - pip install poetry
+    - poetry install
+    - source `poetry env info --path`/bin/activate 
+stages:
+  - test
+  - lint
+
+Tests:
+  stage: test
+  rules:
+    - if: $CI_COMMIT_BRANCH == "shift551"
+  script:
+    - poetry run python -m authorization.src.app.main & poetry run python -m main_service.src.app.main & poetry run pytest authorization/ && poetry run pytest main_service/
+
+Linter:
+  stage: lint
+  rules:
+    - if: $CI_COMMIT_BRANCH == "shift551"
+  script:
+    - flake8 .

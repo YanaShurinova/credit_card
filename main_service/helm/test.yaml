@@ -1,0 +1,12 @@
+app:
+  servicePort: 24123
+  resources:
+    limits:
+      cpu: 400m
+      memory: 2Gi
+    requests:
+      cpu: 400m
+      memory: 2Gi
+  probes:
+    livenessPath: /live
+    readinessPath: /ready

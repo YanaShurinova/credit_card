@@ -1,0 +1,27 @@
+[tool.poetry]
+name = "credit-card"
+version = "0.1.0"
+description = ""
+authors = ["Yana Shurinova <yana.shurinova009@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.10,<3.11"
+h5py = "^3"
+scipy = "^1.11"
+fastapi = "^0.103.1"
+pytest = "^7.4.2"
+uvicorn = "^0.23.2"
+pytest-cov = "^4.1.0"
+httpx = "^0.24.1"
+opencv-python-headless = "^4.8.0.76"
+python-multipart = "^0.0.6"
+aiohttp = "^3.8.5"
+python-dotenv = "^1.0.0"
+aiokafka = "^0.8.1"
+aiojobs = "^1.2.0"
+kfw = "^0.0.1a9"
+aiofiles = "^23.2.1"
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

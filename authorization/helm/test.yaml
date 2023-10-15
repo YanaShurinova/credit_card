@@ -1,0 +1,16 @@
+app:
+  servicePort: 24023
+  resources:
+    limits:
+      cpu: 300m
+      memory: 2Gi
+    requests:
+      cpu: 300m
+      memory: 2Gi
+  probes:
+    livenessPath: /live
+    readinessPath: /ready
+  data:
+    auth_url: "http://127.0.0.1:24023"
+    main_url: "http://127.0.0.1:24123"
+    verify_url: "http://127.0.0.1:24223"

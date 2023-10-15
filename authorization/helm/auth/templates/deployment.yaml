@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "auth.fullname" . }}
+  labels: {{ include "auth.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels: {{ include "auth.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{ include "auth.selectorLabels" . | nindent 8}}
+    spec:
+      containers:
+      - name: {{ .Chart.Name }}
+        image: "{{ .Values.image.repository }}"
+        ports:
+          - containerPort: 24023
+        resources:
+          {{-toYaml .Values.app.resources | nindent 12 }}
+        readinessProbe:
+          httpGet:
+            path: {{ .Values.app.probes.readinessPath }}
+            port: {{ .Values.app.servicePort }}
+          failureThreshold: {{ .Values.app.failureThreshold }}
+          initialDelaySecond: {{ .Values.app.initialDelaySecond }}
+          periodSeconds: {{ .Values.app.periodSeconds }}
+          successThreshold: {{ .Values.app.successThreshold }}
+        livenessProbe:
+          httpGet:
+            path: {{ .Values.app.probes.livenesssPath }}
+            port: {{ .Values.app.servicePort }}
+          failureThreshold: {{ .Values.app.failureThreshold }}
+          initialDelaySecond: {{ .Values.app.initialDelaySecond }}
+          periodSeconds: {{ .Values.app.periodSeconds }}
+        env:
+          - name: AUTH_URL
+            valueFrom:
+              configMapKeyRef:
+                key: auth_url
+                name: {{ .Release.Name}}
+          - name: MAIN_URL
+            valueFrom:
+              configMapKeyRef:
+                key: main_url
+                name: {{ .Release.Name}}
+          - name: VERIFY_URL
+            valueFrom:
+              configMapKeyRef:
+                key: verify_url
+                name: {{ .Release.Name}}
+          - name: DB_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                key: db_password
+                name: creditcard-secret

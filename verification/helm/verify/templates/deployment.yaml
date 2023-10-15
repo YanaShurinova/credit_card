@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "verify.fullname" . }}
+  labels: {{ include "verify.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels: {{ include "verify.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{ include "verify.selectorLabels" . | nindent 8}}
+    spec:
+      containers:
+      - name: {{ .Chart.Name }}
+        image: "{{ .Values.image.repository }}"
+        ports:
+          - containerPort: 24223
+        resources:
+          {{-toYaml .Values.app.resources | nindent 12 }}
+        readinessProbe:
+          httpGet:
+            path: {{ .Values.app.probes.readinessPath }}
+            port: {{ .Values.app.servicePort }}
+          failureThreshold: {{ .Values.app.failureThreshold }}
+          initialDelaySecond: {{ .Values.app.initialDelaySecond }}
+          periodSeconds: {{ .Values.app.periodSeconds }}
+          successThreshold: {{ .Values.app.successThreshold }}
+        livenessProbe:
+          httpGet:
+            path: {{ .Values.app.probes.livenesssPath }}
+            port: {{ .Values.app.servicePort }}
+          failureThreshold: {{ .Values.app.failureThreshold }}
+          initialDelaySecond: {{ .Values.app.initialDelaySecond }}
+          periodSeconds: {{ .Values.app.periodSeconds }}

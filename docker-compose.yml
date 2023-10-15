@@ -1,0 +1,130 @@
+services:
+  zookeeper:
+    image: bitnami/zookeeper:latest
+    restart: "on-failure"
+    environment:
+      - ZOO_PORT_NUMBER=2181
+      - ZOO_TICK_TIME=2000
+      - ZOO_SERVER_ID=1
+      - ZOO_SERVERS=zookeeper:2888:3888
+      - ALLOW_ANONYMOUS_LOGIN=yes
+    expose:
+      - 2181
+      - 2888
+      - 3888
+#    volumes:
+#      - ./storage/zookeeper_1/:/bitnami/zookeeper:rw
+
+  kafka:
+    image: bitnami/kafka:latest
+    restart: "on-failure"
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    expose:
+      - 9092
+    environment:
+      - KAFKA_BROKER_ID=1
+      - ALLOW_PLAINTEXT_LISTENER=yes
+      - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
+      - KAFKA_CFG_LISTENERS=CLIENT://:9092,EXTERNAL://:9093
+      - KAFKA_CFG_ADVERTISED_LISTENERS=CLIENT://localhost:9092,EXTERNAL://localhost:9093
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CLIENT:PLAINTEXT,EXTERNAL:PLAINTEXT
+      - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=CLIENT
+      - KAFKA_CFG_OFFSETS_TOPIC_REPLICATION_FACTOR=1
+      - KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE=false
+    
+#    volumes:
+#      - ./storage/kafka_1:/bitnami/kafka:rw
+
+  main_service:
+        build:
+            context: ./main_service
+            dockerfile: Dockerfile
+        command: uvicorn main_service.src.app.main:app --reload --port 24123
+        volumes:
+            - ./main_service:/usr/src/app
+
+  producer:
+        build:
+            context: ./authorization
+            dockerfile: Dockerfile
+        command: uvicorn authorization.src.app.main:app --reload --workers 1 --port 24023
+        volumes:
+            - ./authorization:/usr/src/app
+        environment:
+            - KAFKA_HOST=kafka
+            - KAFKA_PORT=9092
+        depends_on:
+            - kafka
+            - zookeeper
+
+  consumer:
+      build:
+          context: ./verification
+          dockerfile: Dockerfile
+      command: uvicorn verification.src.app.main:app --reload --workers 1 --port 24223
+      volumes:
+          - ./verification:/usr/src/app
+      environment:
+          - KAFKA_HOST=kafka
+          - KAFKA_PORT=9092
+          - KAFKA_TOPICS=faces
+      depends_on:
+          - kafka
+          - zookeeper
+  
+  
+  prometheus:
+    image: prom/prometheus:latest
+    # volumes:
+    #   - ./prometheus:/etc/prometheus/
+    container_name: prometheus
+    hostname: prometheus
+    command:
+      - --config.file=/authorization/prometheus.yml
+    ports:
+      - 9090:9090
+    restart: unless-stopped
+    environment:
+      TZ: "Europe/Moscow"
+    networks:
+      - default
+
+  # grafana:
+  #   image: grafana/grafana
+  #   user: root
+  #   depends_on:
+  #     - prometheus
+  #   ports:
+  #     - 3000:3000
+  #   volumes:
+  #     - ./grafana:/var/lib/grafana
+  #     - ./grafana/provisioning/:/etc/grafana/provisioning/
+  #   container_name: grafana
+  #   hostname: grafana
+  #   restart: unless-stopped
+  #   environment:
+  #     TZ: "Europe/Moscow"
+  #   networks:
+  #     - default
+  
+  # postgres_auth:
+  #   image: postgres:13.3
+  #   environment:
+  #     POSTGRES_DB: "auth"
+  #     POSTGRES_USER: "postgres"
+  #     POSTGRES_PASSWORD: "1234"
+  #   ports:
+  #     - "5532:5532"
+
+  # postgres_main:
+  #   image: postgres:13.3
+  #   environment:
+  #     POSTGRES_DB: "main"
+  #     POSTGRES_USER: "postgres"
+  #     POSTGRES_PASSWORD: "1234"
+  #   ports:
+  #     - "5432:5432"
+
